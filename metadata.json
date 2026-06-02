@@ -1,0 +1,13 @@
+{
+    "KPackageStructure": "Plasma/Wallpaper",
+    "KPlugin": {
+        "Name": "Raven Wallpaper Engine",
+        "Description": "Hardware-accelerated zero-copy video wallpaper engine with D-Bus control and safety breaker",
+        "Icon": "video-x-generic",
+        "Id": "org.kde.plasma.ravenwallpaper",
+        "ServiceTypes": ["Plasma/Wallpaper"],
+        "Version": "1.0.0"
+    },
+    "X-Plasma-API-Minimum-Version": "6.0"
+}
+
