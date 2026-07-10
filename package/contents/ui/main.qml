@@ -102,9 +102,9 @@ WallpaperItem {
 
         // Degradado radial simulado (radial gradient) para efecto viñeta
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#00000000" }
-            GradientStop { position: 0.7; color: "#1a000000" }
-            GradientStop { position: 1.0; color: "#66000000" }
+            GradientStop { position: 0.0; color: "#1a000000" } // 10% opacity center
+            GradientStop { position: 0.5; color: "#66000000" } // 40% opacity mid
+            GradientStop { position: 1.0; color: "#cc000000" } // 80% opacity edge
         }
 
         Behavior on opacity {
