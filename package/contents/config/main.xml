@@ -34,5 +34,17 @@
     <entry name="PlaylistOrder" type="Int">
       <default>0</default>
     </entry>
+    <entry name="ShowFrame" type="Bool">
+      <default>false</default>
+    </entry>
+    <entry name="FrameThickness" type="Int">
+      <default>8</default>
+    </entry>
+    <entry name="FrameRadius" type="Int">
+      <default>16</default>
+    </entry>
+    <entry name="FrameColor" type="String">
+      <default>#80ffffff</default>
+    </entry>
   </group>
 </kcfg>

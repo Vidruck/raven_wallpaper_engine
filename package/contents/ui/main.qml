@@ -19,6 +19,10 @@ WallpaperItem {
     readonly property bool mute: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.Mute : true
     readonly property int loopMode: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.LoopMode : 0
     readonly property int playlistOrder: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.PlaylistOrder : 0
+    readonly property bool showFrame: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.ShowFrame : false
+    readonly property int frameThickness: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.FrameThickness : 8
+    readonly property int frameRadius: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.FrameRadius : 16
+    readonly property color frameColor: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.FrameColor : "#80ffffff"
 
     // Fondo alternativo de seguridad (fallback background)
     Rectangle {
@@ -110,5 +114,22 @@ WallpaperItem {
         Behavior on opacity {
             NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
         }
+    }
+
+    // Marco redondeado decorativo (Rounded frame overlay con esquinas rellenas)
+    Rectangle {
+        id: roundedFrame
+        visible: root.showFrame
+        color: "transparent"
+
+        // Calculamos la extensión necesaria para cubrir completamente las esquinas de la pantalla
+        readonly property int d: root.frameThickness + root.frameRadius
+
+        anchors.fill: parent
+        anchors.margins: -d
+
+        border.color: root.frameColor
+        border.width: root.frameThickness + d
+        radius: root.frameRadius + (root.frameThickness + d)
     }
 }

@@ -42,7 +42,12 @@ Kirigami.FormLayout {
             "overlayDesc": "Agrega un degradado y viñeta sutiles al fondo para mejorar el contraste.",
             "fileDialogTitle": "Selecciona un archivo de video",
             "folderDialogTitle": "Selecciona una carpeta de videos",
-            "playlistDialogTitle": "Selecciona múltiples archivos de video"
+            "playlistDialogTitle": "Selecciona múltiples archivos de video",
+            "showFrame": "Marco Redondeado:",
+            "frameDesc": "Agrega un borde decorativo redondeado sobre el escritorio.",
+            "frameThickness": "Grosor del marco:",
+            "frameRadius": "Curvatura (Radio):",
+            "frameColor": "Color del marco:"
         },
         "en": {
             "title": "Raven Wallpaper Engine Settings",
@@ -74,7 +79,12 @@ Kirigami.FormLayout {
             "overlayDesc": "Adds a subtle gradient and vignette to the background to improve contrast.",
             "fileDialogTitle": "Select a video file",
             "folderDialogTitle": "Select a video folder",
-            "playlistDialogTitle": "Select multiple video files"
+            "playlistDialogTitle": "Select multiple video files",
+            "showFrame": "Rounded Frame:",
+            "frameDesc": "Adds a decorative rounded border over the desktop.",
+            "frameThickness": "Frame Thickness:",
+            "frameRadius": "Corner Radius:",
+            "frameColor": "Frame Color:"
         }
     }
     readonly property var t: isSpanish ? texts["es"] : texts["en"]
@@ -90,6 +100,10 @@ Kirigami.FormLayout {
     property alias cfg_Mute: muteSwitch.checked
     property alias cfg_LoopMode: loopModeCombo.currentIndex
     property alias cfg_PlaylistOrder: playlistOrderCombo.currentIndex
+    property alias cfg_ShowFrame: frameSwitch.checked
+    property alias cfg_FrameThickness: frameThicknessSlider.value
+    property alias cfg_FrameRadius: frameRadiusSlider.value
+    property alias cfg_FrameColor: frameColorInput.text
 
     // Cuadros de diálogo (dialogs)
     FileDialog {
@@ -296,6 +310,125 @@ Kirigami.FormLayout {
             color: Kirigami.Theme.disabledTextColor
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
+        }
+    }
+
+    Kirigami.Separator { Layout.fillWidth: true }
+
+    // Habilitar marco decorativo (Rounded Frame)
+    ColumnLayout {
+        Kirigami.FormData.label: root.t.showFrame
+        Layout.fillWidth: true
+        spacing: Kirigami.Units.smallSpacing
+
+        Switch {
+            id: frameSwitch
+        }
+
+        Label {
+            text: root.t.frameDesc
+            font.pointSize: Kirigami.Theme.smallFont.pointSize
+            color: Kirigami.Theme.disabledTextColor
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+        }
+    }
+
+    // Grosor del marco
+    RowLayout {
+        Kirigami.FormData.label: root.t.frameThickness
+        Layout.fillWidth: true
+        visible: frameSwitch.checked
+
+        Slider {
+            id: frameThicknessSlider
+            Layout.fillWidth: true
+            from: 1
+            to: 50
+            stepSize: 1
+        }
+
+        Label {
+            text: frameThicknessSlider.value + " px"
+            width: Kirigami.Units.gridUnit * 3
+            horizontalAlignment: Text.AlignRight
+        }
+    }
+
+    // Radio de las esquinas (Corner Radius)
+    RowLayout {
+        Kirigami.FormData.label: root.t.frameRadius
+        Layout.fillWidth: true
+        visible: frameSwitch.checked
+
+        Slider {
+            id: frameRadiusSlider
+            Layout.fillWidth: true
+            from: 0
+            to: 100
+            stepSize: 1
+        }
+
+        Label {
+            text: frameRadiusSlider.value + " px"
+            width: Kirigami.Units.gridUnit * 3
+            horizontalAlignment: Text.AlignRight
+        }
+    }
+
+    // Color del marco (Soporta transparencia Hex ARGB/RGBA)
+    RowLayout {
+        Kirigami.FormData.label: root.t.frameColor
+        Layout.fillWidth: true
+        spacing: Kirigami.Units.smallSpacing
+        visible: frameSwitch.checked
+
+        Button {
+            id: colorButton
+            Layout.fillWidth: true
+            
+            contentItem: RowLayout {
+                spacing: Kirigami.Units.smallSpacing
+                
+                Rectangle {
+                    width: Kirigami.Units.gridUnit
+                    height: Kirigami.Units.gridUnit
+                    color: {
+                        try {
+                            return frameColorInput.text !== "" ? frameColorInput.text : "#80ffffff"
+                        } catch(e) {
+                            return "#80ffffff"
+                        }
+                    }
+                    border.color: Kirigami.Theme.textColor
+                    border.width: 1
+                    radius: 3
+                }
+                
+                Label {
+                    text: frameColorInput.text !== "" ? frameColorInput.text : "#80ffffff"
+                    Layout.fillWidth: true
+                    horizontalAlignment: Text.AlignHCenter
+                }
+            }
+            
+            onClicked: frameColorDialog.open()
+        }
+
+        TextField {
+            id: frameColorInput
+            visible: false
+            text: "#80ffffff"
+        }
+        
+        ColorDialog {
+            id: frameColorDialog
+            title: root.t.frameColor
+            selectedColor: frameColorInput.text !== "" ? frameColorInput.text : "#80ffffff"
+            options: ColorDialog.ShowAlphaChannel
+            onAccepted: {
+                frameColorInput.text = frameColorDialog.selectedColor.toString()
+            }
         }
     }
 }

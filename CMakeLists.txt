@@ -5,8 +5,9 @@ project(raven_wallpaper_engine LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+set(QT_MAJOR_VERSION 6)
 set(QT_VERSION_MAJOR 6)
-find_package(Qt6 COMPONENTS Core Quick Multimedia DBus REQUIRED)
+set(KF_MAJOR_VERSION 6)
 
 find_package(ECM REQUIRED NO_MODULE)
 set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
@@ -14,6 +15,10 @@ set(CMAKE_MODULE_PATH ${ECM_MODULE_PATH})
 include(KDEInstallDirs)
 include(KDECMakeSettings)
 include(KDECompilerSettings NO_POLICY_SCOPE)
+
+set(QT_VERSION_MAJOR 6)
+find_package(Qt6 COMPONENTS Core Quick Multimedia DBus REQUIRED)
+qt_policy(SET QTP0001 NEW)
 
 # QML Module configuration
 qt_add_qml_module(ravenwallpaperplugin
@@ -72,3 +77,5 @@ install(DIRECTORY ${CMAKE_BINARY_DIR}/org/kde/plasma/ravenwallpaper/
 # Install metadata.json and packages
 install(FILES metadata.json DESTINATION ${KDE_INSTALL_DATADIR}/plasma/wallpapers/org.kde.plasma.ravenwallpaper)
 install(DIRECTORY package/contents DESTINATION ${KDE_INSTALL_DATADIR}/plasma/wallpapers/org.kde.plasma.ravenwallpaper)
+
+
