@@ -38,8 +38,12 @@ Kirigami.FormLayout {
             "stretch": "Estirar",
             "aspectFit": "Ajustar con Aspecto",
             "aspectCrop": "Recortar con Aspecto",
-            "showOverlay": "Superposición Premium:",
+            "showOverlay": "Viñeteado y Superposición:",
             "overlayDesc": "Agrega un degradado y viñeta sutiles al fondo para mejorar el contraste.",
+            "vignetteSaturation": "Saturación del Viñeteado:",
+            "imageQualityHeader": "Calidad de Imagen y Reproducción",
+            "videoSaturation": "Saturación de Color:",
+            "videoContrast": "Contraste de Video:",
             "fileDialogTitle": "Selecciona un archivo de video",
             "folderDialogTitle": "Selecciona una carpeta de videos",
             "playlistDialogTitle": "Selecciona múltiples archivos de video",
@@ -75,8 +79,12 @@ Kirigami.FormLayout {
             "stretch": "Stretch",
             "aspectFit": "Preserve Aspect Fit",
             "aspectCrop": "Preserve Aspect Crop",
-            "showOverlay": "Premium Overlay:",
+            "showOverlay": "Vignette & Overlay:",
             "overlayDesc": "Adds a subtle gradient and vignette to the background to improve contrast.",
+            "vignetteSaturation": "Vignette Saturation:",
+            "imageQualityHeader": "Image & Playback Quality",
+            "videoSaturation": "Color Saturation:",
+            "videoContrast": "Video Contrast:",
             "fileDialogTitle": "Select a video file",
             "folderDialogTitle": "Select a video folder",
             "playlistDialogTitle": "Select multiple video files",
@@ -96,6 +104,9 @@ Kirigami.FormLayout {
     property alias cfg_PlaybackRate: speedSlider.value
     property alias cfg_FillMode: fillModeCombo.currentIndex
     property alias cfg_ShowOverlay: overlaySwitch.checked
+    property alias cfg_VignetteSaturation: vignetteSatSlider.value
+    property alias cfg_VideoSaturation: videoSatSlider.value
+    property alias cfg_VideoContrast: videoContrastSlider.value
     property alias cfg_SourceType: sourceTypeCombo.currentIndex
     property alias cfg_Mute: muteSwitch.checked
     property alias cfg_LoopMode: loopModeCombo.currentIndex
@@ -310,6 +321,78 @@ Kirigami.FormLayout {
             color: Kirigami.Theme.disabledTextColor
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
+        }
+    }
+
+    // Grado de saturación / intensidad del viñeteado
+    RowLayout {
+        Kirigami.FormData.label: root.t.vignetteSaturation
+        Layout.fillWidth: true
+        visible: overlaySwitch.checked
+
+        Slider {
+            id: vignetteSatSlider
+            Layout.fillWidth: true
+            from: 0.0
+            to: 1.0
+            stepSize: 0.05
+        }
+
+        Label {
+            text: Math.round(vignetteSatSlider.value * 100) + "%"
+            width: Kirigami.Units.gridUnit * 3
+            horizontalAlignment: Text.AlignRight
+        }
+    }
+
+    Kirigami.Separator { Layout.fillWidth: true }
+
+    // Sección de Calidad de Imagen y Reproducción
+    Kirigami.Heading {
+        Layout.fillWidth: true
+        text: root.t.imageQualityHeader
+        level: 3
+        topPadding: Kirigami.Units.mediumSpacing
+        bottomPadding: Kirigami.Units.smallSpacing
+    }
+
+    // Saturación de color del vídeo
+    RowLayout {
+        Kirigami.FormData.label: root.t.videoSaturation
+        Layout.fillWidth: true
+
+        Slider {
+            id: videoSatSlider
+            Layout.fillWidth: true
+            from: 0.0
+            to: 2.0
+            stepSize: 0.05
+        }
+
+        Label {
+            text: Math.round(videoSatSlider.value * 100) + "%"
+            width: Kirigami.Units.gridUnit * 3
+            horizontalAlignment: Text.AlignRight
+        }
+    }
+
+    // Contraste del vídeo
+    RowLayout {
+        Kirigami.FormData.label: root.t.videoContrast
+        Layout.fillWidth: true
+
+        Slider {
+            id: videoContrastSlider
+            Layout.fillWidth: true
+            from: 0.0
+            to: 2.0
+            stepSize: 0.05
+        }
+
+        Label {
+            text: Math.round(videoContrastSlider.value * 100) + "%"
+            width: Kirigami.Units.gridUnit * 3
+            horizontalAlignment: Text.AlignRight
         }
     }
 

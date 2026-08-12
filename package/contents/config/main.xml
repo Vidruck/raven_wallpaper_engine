@@ -46,5 +46,14 @@
     <entry name="FrameColor" type="String">
       <default>#80ffffff</default>
     </entry>
+    <entry name="VignetteSaturation" type="Double">
+      <default>0.5</default>
+    </entry>
+    <entry name="VideoSaturation" type="Double">
+      <default>1.0</default>
+    </entry>
+    <entry name="VideoContrast" type="Double">
+      <default>1.0</default>
+    </entry>
   </group>
 </kcfg>

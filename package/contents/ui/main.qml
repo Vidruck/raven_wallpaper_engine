@@ -15,6 +15,9 @@ WallpaperItem {
     readonly property double playbackRate: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.PlaybackRate : 1.0
     readonly property int fillModeIndex: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.FillMode : 2
     readonly property bool showOverlay: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.ShowOverlay : false
+    readonly property double vignetteSaturation: (typeof wallpaper !== 'undefined' && wallpaper.configuration.VignetteSaturation !== undefined) ? wallpaper.configuration.VignetteSaturation : 0.5
+    readonly property double videoSaturation: (typeof wallpaper !== 'undefined' && wallpaper.configuration.VideoSaturation !== undefined) ? wallpaper.configuration.VideoSaturation : 1.0
+    readonly property double videoContrast: (typeof wallpaper !== 'undefined' && wallpaper.configuration.VideoContrast !== undefined) ? wallpaper.configuration.VideoContrast : 1.0
     readonly property int sourceType: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.SourceType : 0
     readonly property bool mute: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.Mute : true
     readonly property int loopMode: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.LoopMode : 0
@@ -96,19 +99,43 @@ WallpaperItem {
         }
     }
 
-    // Superposición oscura para contraste (overlay vignette)
+    // Capa de mejora de calidad de imagen (Saturación de Color y Contraste mediante Shader/Mezcla)
+    Item {
+        id: colorAdjustmentLayer
+        anchors.fill: parent
+        visible: videoOutput.visible && (root.videoSaturation !== 1.0 || root.videoContrast !== 1.0)
+        opacity: videoOutput.opacity
+
+        // Capa de ajuste de contraste (overlay de mezcla de brillo/oscuridad)
+        Rectangle {
+            anchors.fill: parent
+            visible: root.videoContrast !== 1.0
+            color: root.videoContrast > 1.0 ? "#ffffff" : "#000000"
+            opacity: Math.min(Math.abs(root.videoContrast - 1.0) * 0.35, 0.6)
+        }
+
+        // Capa de ajuste de saturación de color (tinte reactivo)
+        Rectangle {
+            anchors.fill: parent
+            visible: root.videoSaturation !== 1.0
+            color: root.videoSaturation < 1.0 ? "#808080" : "transparent"
+            opacity: root.videoSaturation < 1.0 ? Math.min((1.0 - root.videoSaturation), 0.9) : 0.0
+        }
+    }
+
+    // Superposición oscura para contraste (overlay vignette con grado de saturación configurable)
     Rectangle {
         id: premiumOverlay
         anchors.fill: parent
         visible: root.showOverlay
         color: "transparent"
-        opacity: videoOutput.opacity
+        opacity: videoOutput.opacity * Math.max(0.1, root.vignetteSaturation * 1.5)
 
         // Degradado radial simulado (radial gradient) para efecto viñeta
         gradient: Gradient {
-            GradientStop { position: 0.0; color: "#1a000000" } // 10% opacity center
-            GradientStop { position: 0.5; color: "#66000000" } // 40% opacity mid
-            GradientStop { position: 1.0; color: "#cc000000" } // 80% opacity edge
+            GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.1 * root.vignetteSaturation * 2.0) }
+            GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.4 * root.vignetteSaturation * 2.0) }
+            GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.85 * root.vignetteSaturation * 2.0) }
         }
 
         Behavior on opacity {
