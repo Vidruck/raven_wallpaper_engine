@@ -45,7 +45,8 @@ void VideoPlaybackService::setLoopMode(int mode)
     if (m_loopMode == mode) return;
     m_loopMode = mode;
     
-    // Ajustar internamente el modo de bucle (loop mode) según la selección.
+    // Ajustar internamente el modo de bucle (loop mode) según la selección en el puerto multimedia.
+    m_playerPort->setInfiniteLoop(m_loopMode == 0);
 }
 
 int VideoPlaybackService::loopMode() const
@@ -67,22 +68,65 @@ int VideoPlaybackService::playlistOrder() const
 
 void VideoPlaybackService::setSuspended(bool suspended)
 {
-    if (m_isSuspended == suspended) return;
-    m_isSuspended = suspended;
-    
-    if (m_isSuspended) {
-        m_playerPort->pause();
-    } else {
-        if (!m_playlist.isEmpty()) {
-            m_playerPort->play();
-        }
-    }
+    if (m_isSystemSuspended == suspended) return;
+    m_isSystemSuspended = suspended;
+    applyPlaybackState();
     emit stateChanged();
 }
 
 bool VideoPlaybackService::isSuspended() const
 {
-    return m_isSuspended;
+    return m_isSystemSuspended || m_isUserPaused;
+}
+
+void VideoPlaybackService::setPauseOnBattery(bool enabled)
+{
+    m_systemStatePort->setPauseOnBattery(enabled);
+}
+
+bool VideoPlaybackService::pauseOnBattery() const
+{
+    return m_systemStatePort->pauseOnBattery();
+}
+
+void VideoPlaybackService::setUserPaused(bool paused)
+{
+    if (m_isUserPaused == paused) return;
+    m_isUserPaused = paused;
+    applyPlaybackState();
+    emit stateChanged();
+}
+
+bool VideoPlaybackService::isUserPaused() const
+{
+    return m_isUserPaused;
+}
+
+void VideoPlaybackService::applyPlaybackState()
+{
+    if (isSuspended()) {
+        m_playerPort->pause();
+    } else if (!m_playlist.isEmpty() && m_playlistIndex >= 0 && m_playlistIndex < m_playlist.size()) {
+        m_playerPort->play();
+    }
+}
+
+QString VideoPlaybackService::currentFileName() const
+{
+    if (m_playlistIndex >= 0 && m_playlistIndex < m_playlist.size()) {
+        return m_playlist.at(m_playlistIndex).fileName();
+    }
+    return QString();
+}
+
+int VideoPlaybackService::playlistCount() const
+{
+    return m_playlist.size();
+}
+
+int VideoPlaybackService::currentIndex() const
+{
+    return m_playlistIndex;
 }
 
 void VideoPlaybackService::playNext()
@@ -91,7 +135,7 @@ void VideoPlaybackService::playNext()
 
     m_playlistIndex++;
     if (m_playlistIndex >= m_playlist.size()) {
-        if (m_loopMode == 2) { 
+        if (m_loopMode == 2 || m_loopMode == 0) { 
             // Reiniciar la lista completa (loop full list)
             if (m_playlistOrder == 1 && m_playlist.size() > 1) {
                 // Aleatorizar el orden (shuffle)
@@ -108,6 +152,17 @@ void VideoPlaybackService::playNext()
     } else {
         loadIndex(m_playlistIndex);
     }
+}
+
+void VideoPlaybackService::playPrevious()
+{
+    if (m_playlist.isEmpty()) return;
+
+    m_playlistIndex--;
+    if (m_playlistIndex < 0) {
+        m_playlistIndex = m_playlist.size() - 1;
+    }
+    loadIndex(m_playlistIndex);
 }
 
 void VideoPlaybackService::updatePlaylist()
@@ -163,6 +218,7 @@ void VideoPlaybackService::doUpdatePlaylist()
     }
 
     m_playlistIndex = 0;
+    emit playlistUpdated();
     loadIndex(m_playlistIndex);
 }
 
@@ -173,11 +229,12 @@ void VideoPlaybackService::loadIndex(int index)
         return;
     }
 
+    // Asegurar que el modo de bucle nativo esté sincronizado al cambiar la fuente
+    m_playerPort->setInfiniteLoop(m_loopMode == 0);
     m_playerPort->setSource(m_playlist.at(index));
+    emit currentTrackChanged();
 
-    // Establecer la iteración del modo de bucle (loop mode) nativo.
-    
-    if (!m_isSuspended) {
+    if (!isSuspended()) {
         m_playerPort->play();
     }
 }

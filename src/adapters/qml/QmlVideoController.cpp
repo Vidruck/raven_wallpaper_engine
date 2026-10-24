@@ -32,6 +32,15 @@ QmlVideoController::QmlVideoController(QObject *parent)
     });
 
     connect(m_service, &VideoPlaybackService::stateChanged, this, &QmlVideoController::suspensionChanged);
+    connect(m_service, &VideoPlaybackService::currentTrackChanged, this, &QmlVideoController::currentTrackChanged);
+    connect(m_service, &VideoPlaybackService::playlistUpdated, this, &QmlVideoController::playlistUpdated);
+}
+
+QmlVideoController::~QmlVideoController()
+{
+    if (m_playerAdapter) {
+        m_playerAdapter->detachVideoOutput();
+    }
 }
 
 QObject* QmlVideoController::mediaPlayer() const
@@ -123,6 +132,40 @@ void QmlVideoController::setMute(bool mute)
     emit muteChanged();
 }
 
+bool QmlVideoController::pauseOnBattery() const
+{
+    return m_service->pauseOnBattery();
+}
+
+void QmlVideoController::setPauseOnBattery(bool enabled)
+{
+    if (m_service->pauseOnBattery() == enabled) return;
+    m_service->setPauseOnBattery(enabled);
+    emit pauseOnBatteryChanged();
+}
+
+bool QmlVideoController::userPaused() const
+{
+    return m_service->isUserPaused();
+}
+
+void QmlVideoController::setUserPaused(bool paused)
+{
+    if (m_service->isUserPaused() == paused) return;
+    m_service->setUserPaused(paused);
+    emit userPausedChanged();
+}
+
+QString QmlVideoController::currentFileName() const
+{
+    return m_service->currentFileName();
+}
+
+int QmlVideoController::playlistCount() const
+{
+    return m_service->playlistCount();
+}
+
 bool QmlVideoController::isSuspended() const
 {
     return m_service->isSuspended();
@@ -148,4 +191,21 @@ void QmlVideoController::pause()
 void QmlVideoController::stop()
 {
     m_playerAdapter->stop();
+}
+
+void QmlVideoController::nextTrack()
+{
+    m_service->playNext();
+}
+
+void QmlVideoController::previousTrack()
+{
+    m_service->playPrevious();
+}
+
+void QmlVideoController::detachVideoOutput()
+{
+    if (m_playerAdapter) {
+        m_playerAdapter->detachVideoOutput();
+    }
 }

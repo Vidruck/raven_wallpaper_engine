@@ -32,10 +32,13 @@ public:
     void setMuted(bool mute) override;
     bool isMuted() const override;
 
+    void setInfiniteLoop(bool infinite) override;
+
     QObject* getUnderlyingPlayer() const override;
 
     // Métodos específicos para Qt
     void setLoops(QMediaPlayer::Loops loops);
+    void detachVideoOutput();
 
 signals:
     void errorOccurred(QMediaPlayer::Error error, const QString &errorString);

@@ -55,5 +55,11 @@
     <entry name="VideoContrast" type="Double">
       <default>1.0</default>
     </entry>
+    <entry name="VideoBrightness" type="Double">
+      <default>1.0</default>
+    </entry>
+    <entry name="PauseOnBattery" type="Bool">
+      <default>false</default>
+    </entry>
   </group>
 </kcfg>

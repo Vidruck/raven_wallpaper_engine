@@ -44,6 +44,11 @@ Kirigami.FormLayout {
             "imageQualityHeader": "Calidad de Imagen y Reproducción",
             "videoSaturation": "Saturación de Color:",
             "videoContrast": "Contraste de Video:",
+            "videoBrightness": "Brillo / Exposición:",
+            "resetBtn": "Restablecer",
+            "powerHeader": "Rendimiento y Ahorro de Energía",
+            "pauseOnBattery": "Pausar en Batería / Ahorro:",
+            "pauseOnBatteryDesc": "Suspende automáticamente la decodificación de video cuando la laptop se desconecta de la corriente o entra en perfil de ahorro de energía.",
             "fileDialogTitle": "Selecciona un archivo de video",
             "folderDialogTitle": "Selecciona una carpeta de videos",
             "playlistDialogTitle": "Selecciona múltiples archivos de video",
@@ -85,6 +90,11 @@ Kirigami.FormLayout {
             "imageQualityHeader": "Image & Playback Quality",
             "videoSaturation": "Color Saturation:",
             "videoContrast": "Video Contrast:",
+            "videoBrightness": "Brightness / Exposure:",
+            "resetBtn": "Reset",
+            "powerHeader": "Performance & Power Saving",
+            "pauseOnBattery": "Pause on Battery / Power Saver:",
+            "pauseOnBatteryDesc": "Automatically suspends video decoding when running on battery power or when Power Saver profile is active.",
             "fileDialogTitle": "Select a video file",
             "folderDialogTitle": "Select a video folder",
             "playlistDialogTitle": "Select multiple video files",
@@ -107,6 +117,8 @@ Kirigami.FormLayout {
     property alias cfg_VignetteSaturation: vignetteSatSlider.value
     property alias cfg_VideoSaturation: videoSatSlider.value
     property alias cfg_VideoContrast: videoContrastSlider.value
+    property alias cfg_VideoBrightness: videoBrightnessSlider.value
+    property alias cfg_PauseOnBattery: pauseOnBatterySwitch.checked
     property alias cfg_SourceType: sourceTypeCombo.currentIndex
     property alias cfg_Mute: muteSwitch.checked
     property alias cfg_LoopMode: loopModeCombo.currentIndex
@@ -295,6 +307,33 @@ Kirigami.FormLayout {
             width: Kirigami.Units.gridUnit * 3
             horizontalAlignment: Text.AlignRight
         }
+
+        ToolButton {
+            icon.name: "edit-undo"
+            ToolTip.visible: hovered
+            ToolTip.text: root.t.resetBtn
+            enabled: Math.abs(speedSlider.value - 1.0) > 0.01
+            onClicked: speedSlider.value = 1.0
+        }
+    }
+
+    // Pausar automáticamente al usar batería o modo ahorro de energía
+    ColumnLayout {
+        Kirigami.FormData.label: root.t.pauseOnBattery
+        Layout.fillWidth: true
+        spacing: Kirigami.Units.smallSpacing
+
+        Switch {
+            id: pauseOnBatterySwitch
+        }
+
+        Label {
+            text: root.t.pauseOnBatteryDesc
+            font.pointSize: Kirigami.Theme.smallFont.pointSize
+            color: Kirigami.Theme.disabledTextColor
+            wrapMode: Text.WordWrap
+            Layout.fillWidth: true
+        }
     }
 
     // Modo de ajuste visual (fill mode)
@@ -374,6 +413,14 @@ Kirigami.FormLayout {
             width: Kirigami.Units.gridUnit * 3
             horizontalAlignment: Text.AlignRight
         }
+
+        ToolButton {
+            icon.name: "edit-undo"
+            ToolTip.visible: hovered
+            ToolTip.text: root.t.resetBtn
+            enabled: Math.abs(videoSatSlider.value - 1.0) > 0.01
+            onClicked: videoSatSlider.value = 1.0
+        }
     }
 
     // Contraste del vídeo
@@ -393,6 +440,42 @@ Kirigami.FormLayout {
             text: Math.round(videoContrastSlider.value * 100) + "%"
             width: Kirigami.Units.gridUnit * 3
             horizontalAlignment: Text.AlignRight
+        }
+
+        ToolButton {
+            icon.name: "edit-undo"
+            ToolTip.visible: hovered
+            ToolTip.text: root.t.resetBtn
+            enabled: Math.abs(videoContrastSlider.value - 1.0) > 0.01
+            onClicked: videoContrastSlider.value = 1.0
+        }
+    }
+
+    // Brillo / Exposición del vídeo
+    RowLayout {
+        Kirigami.FormData.label: root.t.videoBrightness
+        Layout.fillWidth: true
+
+        Slider {
+            id: videoBrightnessSlider
+            Layout.fillWidth: true
+            from: 0.2
+            to: 1.8
+            stepSize: 0.05
+        }
+
+        Label {
+            text: Math.round(videoBrightnessSlider.value * 100) + "%"
+            width: Kirigami.Units.gridUnit * 3
+            horizontalAlignment: Text.AlignRight
+        }
+
+        ToolButton {
+            icon.name: "edit-undo"
+            ToolTip.visible: hovered
+            ToolTip.text: root.t.resetBtn
+            enabled: Math.abs(videoBrightnessSlider.value - 1.0) > 0.01
+            onClicked: videoBrightnessSlider.value = 1.0
         }
     }
 

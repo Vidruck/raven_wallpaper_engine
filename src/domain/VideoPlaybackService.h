@@ -33,11 +33,23 @@ public:
     void setSuspended(bool suspended);
     bool isSuspended() const;
 
+    void setPauseOnBattery(bool enabled);
+    bool pauseOnBattery() const;
+
+    void setUserPaused(bool paused);
+    bool isUserPaused() const;
+
+    QString currentFileName() const;
+    int playlistCount() const;
+    int currentIndex() const;
+
     void playNext();
+    void playPrevious();
 
 signals:
     void playlistUpdated();
     void stateChanged();
+    void currentTrackChanged();
 
 private slots:
     void doUpdatePlaylist();
@@ -45,6 +57,7 @@ private slots:
 private:
     void loadIndex(int index);
     void updatePlaylist();
+    void applyPlaybackState();
 
     IVideoPlayerPort *m_playerPort;
     ISystemStatePort *m_systemStatePort;
@@ -53,7 +66,8 @@ private:
     int m_sourceType = 0;
     int m_loopMode = 0;
     int m_playlistOrder = 0;
-    bool m_isSuspended = false;
+    bool m_isSystemSuspended = false;
+    bool m_isUserPaused = false;
 
     QList<QUrl> m_playlist;
     int m_playlistIndex = -1;

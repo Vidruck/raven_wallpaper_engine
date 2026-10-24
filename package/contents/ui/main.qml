@@ -7,8 +7,11 @@ import "imports/org/kde/plasma/ravenwallpaper"
 WallpaperItem {
     id: root
     anchors.fill: parent
+    // Recortar geometría que sobresalga (como los márgenes negativos de roundedFrame)
+    // para evitar ensuciar nodos fuera de los límites del monitor en QSGRenderThread.
+    clip: true
 
-    // Propiedades de configuración (exposed by Plasma wallpaper system)
+    // Propiedades de configuración (expuestas por el sistema de fondos de KDE Plasma)
     readonly property string videoSource: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.VideoSource : ""
     readonly property color fallbackColor: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.FallbackColor : "#121214"
     readonly property double videoVolume: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.Volume : 0.0
@@ -18,6 +21,8 @@ WallpaperItem {
     readonly property double vignetteSaturation: (typeof wallpaper !== 'undefined' && wallpaper.configuration.VignetteSaturation !== undefined) ? wallpaper.configuration.VignetteSaturation : 0.5
     readonly property double videoSaturation: (typeof wallpaper !== 'undefined' && wallpaper.configuration.VideoSaturation !== undefined) ? wallpaper.configuration.VideoSaturation : 1.0
     readonly property double videoContrast: (typeof wallpaper !== 'undefined' && wallpaper.configuration.VideoContrast !== undefined) ? wallpaper.configuration.VideoContrast : 1.0
+    readonly property double videoBrightness: (typeof wallpaper !== 'undefined' && wallpaper.configuration.VideoBrightness !== undefined) ? wallpaper.configuration.VideoBrightness : 1.0
+    readonly property bool pauseOnBattery: (typeof wallpaper !== 'undefined' && wallpaper.configuration.PauseOnBattery !== undefined) ? wallpaper.configuration.PauseOnBattery : false
     readonly property int sourceType: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.SourceType : 0
     readonly property bool mute: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.Mute : true
     readonly property int loopMode: (typeof wallpaper !== 'undefined') ? wallpaper.configuration.LoopMode : 0
@@ -50,6 +55,7 @@ WallpaperItem {
         mute: root.mute
         volume: root.videoVolume
         playbackRate: root.playbackRate
+        pauseOnBattery: root.pauseOnBattery
     }
 
     // Salida de video renderizada con copia cero (zero-copy)
@@ -64,82 +70,113 @@ WallpaperItem {
             return VideoOutput.PreserveAspectCrop;
         }
         
-        // Ocultar al haber errores o suspensión para no consumir recursos (rendering)
+        // Ocultar al haber errores o suspensión para no consumir recursos de renderizado
         visible: !controller.hasError && !controller.isSuspended && root.videoSource !== ""
         
-        // Enlazar el reproductor multimedia (media player) a este visualizador
-        // Mensajes de diagnóstico (diagnostics) al montar y desmontar el componente
+        // Enlazar y desenlazar de forma segura el reproductor multimedia con este visualizador
         Component.onCompleted: {
-            console.log("RavenWallpaper: VideoOutput completed. Sink:", videoOutput.videoSink);
-            console.log("RavenWallpaper: mediaPlayer:", controller.mediaPlayer);
-            controller.mediaPlayer.videoOutput = videoOutput.videoSink
-            console.log("RavenWallpaper: videoSource =", root.videoSource);
-            console.log("RavenWallpaper: visible =", visible);
-            console.log("RavenWallpaper: isSuspended =", controller.isSuspended);
-            console.log("RavenWallpaper: hasError =", controller.hasError);
+            if (controller.mediaPlayer) {
+                controller.mediaPlayer.videoOutput = videoOutput.videoSink;
+            }
         }
 
-        Connections {
-            target: controller.mediaPlayer
-            function onPlaybackStateChanged() {
-                console.log("RavenWallpaper: Playback state changed to", controller.mediaPlayer.playbackState);
-            }
-            function onMediaStatusChanged() {
-                console.log("RavenWallpaper: Media status changed to", controller.mediaPlayer.mediaStatus);
-            }
-            function onErrorOccurred(error, errorString) {
-                console.log("RavenWallpaper: MediaPlayer ERROR:", error, errorString);
-            }
+        Component.onDestruction: {
+            controller.detachVideoOutput();
         }
 
         // Animaciones para transiciones fluidas (smooth transitions)
         opacity: visible ? 1.0 : 0.0
         Behavior on opacity {
-            NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
+            NumberAnimation { duration: 400; easing.type: Easing.InOutQuad }
         }
     }
 
-    // Capa de mejora de calidad de imagen (Saturación de Color y Contraste mediante Shader/Mezcla)
+    // Capa ligera de post-procesado sin FBOs (evita QQuickShaderEffectSource::updatePaintNode)
     Item {
         id: colorAdjustmentLayer
         anchors.fill: parent
-        visible: videoOutput.visible && (root.videoSaturation !== 1.0 || root.videoContrast !== 1.0)
+        visible: videoOutput.visible && (
+            Math.abs(root.videoSaturation - 1.0) > 0.01 ||
+            Math.abs(root.videoContrast - 1.0) > 0.01 ||
+            Math.abs(root.videoBrightness - 1.0) > 0.01
+        )
         opacity: videoOutput.opacity
 
-        // Capa de ajuste de contraste (overlay de mezcla de brillo/oscuridad)
+        // Ajuste de brillo / exposición (aclarado u oscurecimiento directo)
         Rectangle {
             anchors.fill: parent
-            visible: root.videoContrast !== 1.0
-            color: root.videoContrast > 1.0 ? "#ffffff" : "#000000"
-            opacity: Math.min(Math.abs(root.videoContrast - 1.0) * 0.35, 0.6)
+            visible: Math.abs(root.videoBrightness - 1.0) > 0.01
+            color: root.videoBrightness > 1.0 ? "#ffffff" : "#000000"
+            opacity: Math.min(Math.abs(root.videoBrightness - 1.0) * 0.55, 0.75)
         }
 
-        // Capa de ajuste de saturación de color (tinte reactivo)
+        // Ajuste de contraste mediante gradiente de luminancia de bordes y centro
         Rectangle {
             anchors.fill: parent
-            visible: root.videoSaturation !== 1.0
+            visible: Math.abs(root.videoContrast - 1.0) > 0.01
+            color: "transparent"
+            opacity: Math.min(Math.abs(root.videoContrast - 1.0) * 0.45, 0.65)
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: root.videoContrast > 1.0 ? "#50000000" : "#40808080" }
+                GradientStop { position: 0.5; color: root.videoContrast > 1.0 ? "#18ffffff" : "#40808080" }
+                GradientStop { position: 1.0; color: root.videoContrast > 1.0 ? "#65000000" : "#40808080" }
+            }
+        }
+
+        // Ajuste de saturación y viveza cromática (desaturación < 1.0 y realce cálido/profundo > 1.0)
+        Rectangle {
+            anchors.fill: parent
+            visible: Math.abs(root.videoSaturation - 1.0) > 0.01
             color: root.videoSaturation < 1.0 ? "#808080" : "transparent"
-            opacity: root.videoSaturation < 1.0 ? Math.min((1.0 - root.videoSaturation), 0.9) : 0.0
+            opacity: root.videoSaturation < 1.0
+                ? Math.min((1.0 - root.videoSaturation) * 0.85, 0.85)
+                : Math.min((root.videoSaturation - 1.0) * 0.28, 0.35)
+            gradient: root.videoSaturation > 1.0 ? vibrantGradient : null
+        }
+
+        Gradient {
+            id: vibrantGradient
+            GradientStop { position: 0.0; color: "#351a0a2e" }
+            GradientStop { position: 0.5; color: "#15ff7b29" }
+            GradientStop { position: 1.0; color: "#40091526" }
         }
     }
 
-    // Superposición oscura para contraste (overlay vignette con grado de saturación configurable)
-    Rectangle {
+    // Superposición cinematográfica de viñeta simétrica en 4 lados (Cinematic 4-edge Vignette)
+    Item {
         id: premiumOverlay
         anchors.fill: parent
-        visible: root.showOverlay
-        color: "transparent"
-        opacity: videoOutput.opacity * Math.max(0.1, root.vignetteSaturation * 1.5)
+        visible: root.showOverlay && videoOutput.visible
+        opacity: videoOutput.opacity * Math.min(1.0, Math.max(0.1, root.vignetteSaturation * 1.4))
 
-        // Degradado radial simulado (radial gradient) para efecto viñeta
-        gradient: Gradient {
-            GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, 0.1 * root.vignetteSaturation * 2.0) }
-            GradientStop { position: 0.5; color: Qt.rgba(0, 0, 0, 0.4 * root.vignetteSaturation * 2.0) }
-            GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, 0.85 * root.vignetteSaturation * 2.0) }
+        // Viñeta vertical (superior e inferior)
+        Rectangle {
+            anchors.fill: parent
+            color: "transparent"
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, Math.min(0.9, 0.55 * root.vignetteSaturation * 1.6)) }
+                GradientStop { position: 0.25; color: Qt.rgba(0, 0, 0, Math.min(0.4, 0.12 * root.vignetteSaturation * 1.6)) }
+                GradientStop { position: 0.5; color: "transparent" }
+                GradientStop { position: 0.75; color: Qt.rgba(0, 0, 0, Math.min(0.45, 0.18 * root.vignetteSaturation * 1.6)) }
+                GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, Math.min(0.95, 0.75 * root.vignetteSaturation * 1.6)) }
+            }
+        }
+
+        // Viñeta horizontal (izquierda y derecha)
+        Rectangle {
+            anchors.fill: parent
+            color: "transparent"
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: Qt.rgba(0, 0, 0, Math.min(0.85, 0.45 * root.vignetteSaturation * 1.5)) }
+                GradientStop { position: 0.2; color: "transparent" }
+                GradientStop { position: 0.8; color: "transparent" }
+                GradientStop { position: 1.0; color: Qt.rgba(0, 0, 0, Math.min(0.85, 0.45 * root.vignetteSaturation * 1.5)) }
+            }
         }
 
         Behavior on opacity {
-            NumberAnimation { duration: 500; easing.type: Easing.InOutQuad }
+            NumberAnimation { duration: 400; easing.type: Easing.InOutQuad }
         }
     }
 

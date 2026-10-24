@@ -27,7 +27,10 @@ public:
     
     virtual void setMuted(bool mute) = 0;
     virtual bool isMuted() const = 0;
-    
+
+    // Configura si el reproductor debe repetir el medio actual indefinidamente o reproducirlo una sola vez.
+    virtual void setInfiniteLoop(bool infinite) = 0;
+
     // El adaptador debe proveer el reproductor real (QMediaPlayer) para ser expuesto a QML.
     virtual QObject* getUnderlyingPlayer() const = 0;
 };

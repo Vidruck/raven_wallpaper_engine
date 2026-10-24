@@ -24,13 +24,17 @@ class QmlVideoController : public QObject {
     Q_PROPERTY(double volume READ volume WRITE setVolume NOTIFY volumeChanged)
     Q_PROPERTY(double playbackRate READ playbackRate WRITE setPlaybackRate NOTIFY playbackRateChanged)
     Q_PROPERTY(bool mute READ mute WRITE setMute NOTIFY muteChanged)
+    Q_PROPERTY(bool pauseOnBattery READ pauseOnBattery WRITE setPauseOnBattery NOTIFY pauseOnBatteryChanged)
+    Q_PROPERTY(bool userPaused READ userPaused WRITE setUserPaused NOTIFY userPausedChanged)
+    Q_PROPERTY(QString currentFileName READ currentFileName NOTIFY currentTrackChanged)
+    Q_PROPERTY(int playlistCount READ playlistCount NOTIFY playlistUpdated)
     
     Q_PROPERTY(bool isSuspended READ isSuspended NOTIFY suspensionChanged)
     Q_PROPERTY(bool hasError READ hasError NOTIFY errorStateChanged)
 
 public:
     explicit QmlVideoController(QObject *parent = nullptr);
-    ~QmlVideoController() override = default;
+    ~QmlVideoController() override;
 
     QObject* mediaPlayer() const;
 
@@ -55,6 +59,15 @@ public:
     bool mute() const;
     void setMute(bool mute);
 
+    bool pauseOnBattery() const;
+    void setPauseOnBattery(bool enabled);
+
+    bool userPaused() const;
+    void setUserPaused(bool paused);
+
+    QString currentFileName() const;
+    int playlistCount() const;
+
     bool isSuspended() const;
     bool hasError() const;
 
@@ -66,6 +79,10 @@ signals:
     void volumeChanged();
     void playbackRateChanged();
     void muteChanged();
+    void pauseOnBatteryChanged();
+    void userPausedChanged();
+    void currentTrackChanged();
+    void playlistUpdated();
     void suspensionChanged();
     void errorStateChanged();
 
@@ -73,6 +90,9 @@ public slots:
     void play();
     void pause();
     void stop();
+    void nextTrack();
+    void previousTrack();
+    void detachVideoOutput();
 
 private:
     QtVideoPlayerAdapter *m_playerAdapter;
