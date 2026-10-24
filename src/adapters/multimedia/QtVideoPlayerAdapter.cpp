@@ -1,8 +1,26 @@
 #include "QtVideoPlayerAdapter.h"
+#include <QtGlobal>
+
+namespace {
+bool ensureHardwareDecodingEnv()
+{
+    // Forzar el backend de decodificación por hardware VAAPI en Linux (evita caer en VDPAU no disponible
+    // o decodificación por software con múltiples hilos av:h264:df* en videos 4K).
+    if (qEnvironmentVariableIsEmpty("QT_FFMPEG_DECODING_HW_DEVICE_TYPES")) {
+        qputenv("QT_FFMPEG_DECODING_HW_DEVICE_TYPES", "vaapi");
+    }
+    return true;
+}
+} // namespace
 
 QtVideoPlayerAdapter::QtVideoPlayerAdapter(QObject *parent)
-    : QObject(parent), m_player(new QMediaPlayer(this)), m_audioOutput(new QAudioOutput(this))
+    : QObject(parent)
 {
+    static const bool hwInit = ensureHardwareDecodingEnv();
+    Q_UNUSED(hwInit);
+
+    m_player = new QMediaPlayer(this);
+    m_audioOutput = new QAudioOutput(this);
     m_player->setAudioOutput(m_audioOutput);
     m_player->setLoops(QMediaPlayer::Infinite);
 
